@@ -1,0 +1,1354 @@
+{
+  "name": "api.documents.ingestion.sabine.bot",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ocr.space/parse/image",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "K85861618188957"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "file0"
+            },
+            {
+              "name": "language",
+              "value": "ita"
+            },
+            {
+              "name": "isOverlayRequired",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "22c7ec21-c1ca-4c59-9ff1-e7686ee7282c",
+      "name": "OCR Space",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2700,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2697d35e-b7d7-417c-be3a-d38090fce2f8",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        4840,
+        1160
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $input.first().json.text || $input.first().json.content }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "user-id",
+                "value": "={{ $('Webhook1').item.json.params['user-id']}}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "231e6d69-caf3-4b48-b9b0-281935dd4e71",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        5000,
+        1160
+      ]
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "862e5f0a-489c-48f6-bfc9-d123d5f27a24",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        5140,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "0451b84b-431f-4ff3-8dc6-a64f34f75264",
+              "leftValue": "={{ $json.headers }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0c8396af-fd06-440e-9a86-5ce9741f00de",
+      "name": "isNewDocument?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        40,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "abe9b955-fd26-49d3-9c48-e400967ab406",
+              "leftValue": "={{ $json.fileExtension }}",
+              "rightValue": "pdf",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e95627a0-5916-4fbc-9b10-0d9372a734c5",
+      "name": "isPDF?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        300,
+        1000
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "51f7f7a5-d002-4a7d-81b8-ceb7a0245ecc",
+              "leftValue": "={{ $json.text.trim().length < 3}}",
+              "rightValue": 3,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "10f9c002-4da6-411d-a96e-18c2b0bf38f9",
+      "name": "isOptical",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        1160,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "id": "efaf9047-7609-4142-a9c0-972b24380223",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        580,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "raLKponKBvJYQc9D",
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "3fc256b3-78e4-4fd8-93cb-6d69c6e09821",
+      "name": "isFilePresent?",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        -420,
+        1620
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "file0",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "id": "978d85c9-5991-4d61-aea8-a7104d49a169",
+      "name": "Extract Text from Pdf",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        860,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8dfed7f0-7510-4570-82f5-6bf1bcc2615a",
+              "leftValue": "={{ $json.ParsedResults[0].ParsedText.length }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3c974f31-aaab-4c31-8c84-24b07cf86152",
+      "name": "IsPicture",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        3000,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "24a0ce87-6f92-469c-b5c5-c97597c01767",
+      "name": "Merge4",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1460,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "543186a6-9328-4207-8486-2a6e4b773f9c",
+              "leftValue": "={{ !!(parseFloat($binary.file0.fileSize.split(\" \")[0]) * ($binary.file0.fileSize.split(\" \")[1].toUpperCase() === 'MB' ? 1024 : 1) < 1024) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a317a100-5d07-4418-b768-8503325ef70b",
+      "name": "fitsSizeOCRLimits",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        2220,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "705c3c5a-6214-4599-8b7c-15e7242dc81e",
+              "leftValue": "={{ $json.numpages }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "bcc918c8-82b6-4098-b92a-e3ed89dc2561",
+      "name": "fitsPageOCRLimits1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        1680,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b7e5c247-8665-4820-8a84-9441213cc8e2",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        5660,
+        2220
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "I'm sorry but the file you provided is an optical pdf with more than 3 pages. I can't read this type of files for the moment.\nBut I can read digital pdfs with any number of pages and of any size!",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "e8a738e4-6ba7-45ca-b59f-68ff957848af",
+      "name": "400 - Optical file size too big1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2940,
+        3060
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "id": "d0558469-612c-4288-bd2f-71a8303191ef",
+      "name": "Merge1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "id": "0176948c-03a4-4cce-bcbb-76d00ffaa566",
+      "name": "Merge2",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1240,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "id": "764cb1be-8ed4-4232-8786-d99b35567216",
+      "name": "Merge6",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3500,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "text": "this is an image that a user uploaded to its digital personal assistant for tagging",
+        "inputType": "base64",
+        "binaryPropertyName": "file0",
+        "options": {}
+      },
+      "id": "fa40858f-fbed-49cf-9fb3-b90498895a2b",
+      "name": "ImageClassification",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.4,
+      "position": [
+        3800,
+        460
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const json = $input.first().json;\nconst text = (json.text) ? json.text : json.ParsedResults[0].ParsedText;\nreturn { \"text\": text };"
+      },
+      "id": "63493501-f9c5-4cff-b405-66c4325dce91",
+      "name": "Format extracted text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3420,
+        1180
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "aa381ae1-d3e3-4daf-8ff8-c8682c6f2903",
+      "name": "Merge5",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        6840,
+        1620
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "checksum",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "file_md5sum",
+              "fieldValue": "={{ $input.item.json.file_checksum }}"
+            },
+            {
+              "fieldId": "file_name",
+              "fieldValue": "={{ $input.item.json.fileName }}"
+            },
+            {
+              "fieldId": "file_size",
+              "fieldValue": "={{ $input.item.json.fileSize }}"
+            },
+            {
+              "fieldId": "file_mime_type",
+              "fieldValue": "={{ $input.item.json.fileMimeType }}"
+            },
+            {
+              "fieldId": "file_extension",
+              "fieldValue": "={{ $input.item.json.fileExtension }}"
+            },
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $json.id }}"
+            },
+            {
+              "fieldId": "=user_id",
+              "fieldValue": "={{ $('Webhook1').item.json.params['user-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "4c1499e1-3a9e-4537-ae30-fb2d6210f0ab",
+      "name": "RegisterFile",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        7100,
+        1620
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.id }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "3b6eb993-0f72-4daa-afbd-5cb04e6977c2",
+      "name": "200 - Already seen",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1040,
+        3040
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "useDataOfInput": 2
+      },
+      "id": "3636d04c-d4a7-44d1-b9e5-7a42b6029128",
+      "name": "Merge3",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        5860,
+        1600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const json = $input.first().json;\nlet text = (json.text) ? json.text : null;\nif(!text){\n  text = (json.ParsedResults && json.ParsedResults[0]) ? json.ParsedResults[0].ParsedText : null;\n}\nif(!text){\n  text = (json.content) ? json.content : null;\n}\nreturn { \"text\": text };"
+      },
+      "id": "5a898c10-678c-42ad-a85e-ace0e5982a56",
+      "name": "Format generated description",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4040,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "659e02c1-7040-46ea-8a8e-43c6402fe342",
+      "name": "Final content",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.1,
+      "position": [
+        4420,
+        1380
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.id }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "cf25f27a-7b23-4139-80d6-5a73ac882ee4",
+      "name": "201 - Return Document id",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        7940,
+        3020
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "dbdd3304-c59d-4844-a186-6b9120b77073",
+      "name": "Create Summary",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        5340,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "combineMapPrompt": "Write a title for the following:\n\n\n\"{text}\"\n\n\nCONCISE SUMMARY:",
+              "prompt": "Write a title for the following:\n\n\n\"{text}\"\n\n\nCONCISE SUMMARY:"
+            }
+          }
+        }
+      },
+      "id": "0697db44-2a8e-46de-88e9-182f0413c6f7",
+      "name": "Create title",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        5840,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "1960d591-38ba-403f-bacb-3dbbdae6387f",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        8240,
+        2240
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "expense",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "amount",
+              "fieldValue": "={{ parseFloat($json.output.amount.replaceAll(\",\",\".\")) }}"
+            },
+            {
+              "fieldId": "currency",
+              "fieldValue": "={{ $json.output.currency }}"
+            },
+            {
+              "fieldId": "vendor",
+              "fieldValue": "={{ $json.output.vendor }}"
+            },
+            {
+              "fieldId": "is_payed",
+              "fieldValue": "={{ $json.output.is_payed }}"
+            },
+            {
+              "fieldId": "document",
+              "fieldValue": "={{ $('RegisterFile').item.json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "dadddb44-9097-4bdc-874c-2c606feada1d",
+      "name": "Create expense",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        8720,
+        1940
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.transcript }}",
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n\t\"amount\": \"23\",\n    \"currency\": \"EUR\",\n\t\"vendor\": \"Next Cube GmbH\",\n    \"is_payed\": true\n}",
+        "options": {
+          "systemPromptTemplate": "You are an expert extraction algorithm of payment document like invoices and receipts.\nFor amount value, use the format <integer part with no separator>.<decimal part rounded at second digit> for example 456.00 or 342424.70 .\nFor currency value, translate to a standard format of 3 uppercase alphabetical charachters for example EUR or USD.\nIf the payment document represent a request for a payment, set is_payed to false. If the payment document represent a confirmation of a payment, set is_payed to true.\nIf you do not know the value of an attribute asked to extract, you may omit the attribute's value."
+        }
+      },
+      "id": "5f441d9d-a673-4582-9cf7-027a3a440a4c",
+      "name": "Extract expenses",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        8140,
+        1940
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "document",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "summary",
+              "fieldValue": "={{ $('Create Summary').item.json.response.text }}"
+            },
+            {
+              "fieldId": "transcript",
+              "fieldValue": "={{ $('Final content').item.json.text }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.response.text }}"
+            },
+            {
+              "fieldId": "user",
+              "fieldValue": "={{ $('Webhook1').item.json.params['user-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "762890c5-3870-4411-b7dd-1658724b1e39",
+      "name": "Create document",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        6540,
+        1960
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "a0da27b9-8fe7-4da7-aa15-e03504d86016",
+      "name": "Merge8",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        7520,
+        1940
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "documents",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "user_id",
+              "condition": "is",
+              "keyValue": "null"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $('Webhook1').item.json.params['user-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "177033fa-c1f7-4e90-a228-db4f11316405",
+      "name": "Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        5200,
+        900
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "id": "01741f88-5bdd-4139-b780-76997feb318c",
+      "name": "Supabase Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        4820,
+        900
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "users/:user-id",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "id": "1b73686b-7605-4aff-8b04-66dd8e18a712",
+      "name": "Webhook1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        260
+      ],
+      "webhookId": "6e7188b5-579e-4894-bcf5-c252bd93ccf3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OCR Space": {
+      "main": [
+        [
+          {
+            "node": "IsPicture",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isNewDocument?": {
+      "main": [
+        [
+          {
+            "node": "isPDF?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "200 - Already seen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isPDF?": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "isOptical": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format extracted text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Extract Text from Pdf",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isFilePresent?": {
+      "main": [
+        [
+          {
+            "node": "isNewDocument?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract Text from Pdf": {
+      "main": [
+        [
+          {
+            "node": "isOptical",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IsPicture": {
+      "main": [
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Format extracted text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "fitsPageOCRLimits1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fitsSizeOCRLimits": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "fitsPageOCRLimits1": {
+      "main": [
+        [
+          {
+            "node": "fitsSizeOCRLimits",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "400 - Optical file size too big1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Create Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Create title",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "OCR Space",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "fitsSizeOCRLimits",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge6": {
+      "main": [
+        [
+          {
+            "node": "ImageClassification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ImageClassification": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format generated description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format extracted text": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Final content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge5": {
+      "main": [
+        [
+          {
+            "node": "RegisterFile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RegisterFile": {
+      "main": [
+        [
+          {
+            "node": "Merge8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format generated description": {
+      "main": [
+        [
+          {
+            "node": "Final content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final content": {
+      "main": [
+        [
+          {
+            "node": "Create Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Summary": {
+      "main": [
+        [
+          {
+            "node": "Create title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create title": {
+      "main": [
+        [
+          {
+            "node": "Create document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract expenses",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract expenses": {
+      "main": [
+        [
+          {
+            "node": "Create expense",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create document": {
+      "main": [
+        [
+          {
+            "node": "Merge8",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge8": {
+      "main": [
+        [
+          {
+            "node": "201 - Return Document id",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract expenses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "isFilePresent?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "137e6409-7a84-4721-a40e-b36d9e343386",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "29e4311680856744f9472b9e9cfe8711633314886b4b576c4e1607832c3175db"
+  },
+  "id": "3SjUw5n62jedp8Gf",
+  "tags": []
+}

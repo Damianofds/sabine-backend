@@ -1,0 +1,469 @@
+{
+  "name": "api.audio.ingestion.sabine.bot",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-3.5-turbo-instruct"
+        },
+        "options": {}
+      },
+      "id": "55708b99-dcbb-4522-be01-ce94cb648c06",
+      "name": "OpenAI Model",
+      "type": "@n8n/n8n-nodes-langchain.lmOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2420,
+        860
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $('Create meeting minutes JSON').item.json.summary }}",
+        "options": {}
+      },
+      "id": "60671b70-5564-4356-8aa3-30cc51653376",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        880
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cc6ac7ec-4728-4433-b938-5740755d7e28",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        1060
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8476ebae-6079-4d22-a220-54c3b6bcff36",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        880
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n\"date\": \"{{ $now.weekdayLong + \" \" + $now.day + \" \" + $now.monthLong + \" \" + $now.year }}\",\n\"summary\": \"{{ $json.text.replaceAll(\"\\n\",\"\").replaceAll('\"','') }}\"\n} ",
+        "options": {}
+      },
+      "id": "ca9aa49f-45c7-47cf-b17f-de7329b6900f",
+      "name": "Create meeting minutes JSON",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        980,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "id": "eb63aa58-7cdf-4af4-aa45-db906cc62e05",
+      "name": "Supabase Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        560
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.id }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "338225c0-89f4-42fc-9e82-a067aa7bf714",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3440,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "audio",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user",
+              "fieldValue": "={{ $('Webhook').item.json.params['user-id'] }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.response.text }}"
+            },
+            {
+              "fieldId": "summary",
+              "fieldValue": "={{ $('Create summary').item.json.response.text }}"
+            },
+            {
+              "fieldId": "transcript",
+              "fieldValue": "={{ $json.response.text }}"
+            }
+          ]
+        }
+      },
+      "id": "d679cb40-0dac-437f-8346-cfa861903371",
+      "name": "Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3060,
+        560
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "binaryPropertyName": "=audio1",
+        "options": {
+          "language": "en"
+        }
+      },
+      "id": "9a4b47cd-daf4-4ed4-badd-f480dd7dd31e",
+      "name": "Transcribe Recordings",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.3,
+      "position": [
+        640,
+        560
+      ],
+      "notesInFlow": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      },
+      "notes": "Transcribe Meeting recordings using OpenAI dedicated service."
+    },
+    {
+      "parameters": {
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "combineMapPrompt": "Write a title for the following:\n\n\n\"{text}\"\n\n\nTITLE:",
+              "prompt": "Write a title for the following:\n\n\n\"{text}\"\n\n\nTITLE:"
+            }
+          }
+        }
+      },
+      "id": "b5146e33-c307-48c2-9e72-888478caf1bf",
+      "name": "Create title",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        560
+      ],
+      "notesInFlow": true,
+      "notes": "Summarize meeting transcripts"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "audio/users/:user-id",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "adff7ee3-34ed-4a9b-a356-a6b8c7b6b8c1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        560
+      ],
+      "webhookId": "aa39bb71-b461-49d7-be0b-93c8f8fb07b8"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "documents",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "user_id",
+              "condition": "is",
+              "keyValue": "null"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $('Webhook').item.json.params['user-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "82c61d6c-01d6-4fbd-b4a4-90cd98516a4b",
+      "name": "Supabase1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        360
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ce0db23a-6a94-4e81-9a7f-8045ecede2e0",
+      "name": "Create summary",
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        2120,
+        560
+      ],
+      "notesInFlow": true,
+      "notes": "Summarize meeting transcripts"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1f599229-ddbe-4fc9-8f34-aed4af856624",
+              "name": "pageContent",
+              "value": "={{ $json.pageContent }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b9563fda-ceb3-493e-ab90-1824eb3b28bf",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        560
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Create summary",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Create title",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create meeting minutes JSON": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "main": [
+        [
+          {
+            "node": "Supabase1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Recordings": {
+      "main": [
+        [
+          {
+            "node": "Create meeting minutes JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create title": {
+      "main": [
+        [
+          {
+            "node": "Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Recordings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create summary": {
+      "main": [
+        [
+          {
+            "node": "Create title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Create summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "526c12fa-d1f6-440c-9875-9e6d27009132",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "29e4311680856744f9472b9e9cfe8711633314886b4b576c4e1607832c3175db"
+  },
+  "id": "70cR3CGBW9Yci4FX",
+  "tags": []
+}

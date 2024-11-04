@@ -1,0 +1,1536 @@
+{
+  "name": "api.sabine.bot",
+  "nodes": [
+    {
+      "parameters": {
+        "action": "generate",
+        "dataPropertyName": "userId"
+      },
+      "id": "486955af-5cf8-4bac-96df-66472cd817c6",
+      "name": "Assign User ID",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        660,
+        -980
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Add a new field called 'myNewField' to the JSON of the item\n$input.item.json.myNewField = 1;\n\nconst adjectives = [\"red\",\"white\",\"green\",\"blue\",\"yellow\",\"purple\",\"black\",\"violet\",\"flashy\",\"sunny\",\"fresh\"];\nconst animals = [\"panther\",\"cat\",\"unicorn\",\"horse\",\"dog\",\"bat\",\"lion\",\"lamb\",\"cow\",\"squirrel\",\"ant\"];\n\nconst randomAdjectiveIndex = Math.floor(Math.random() * adjectives.length);\nconst randomAnimalIndex = Math.floor(Math.random() * animals.length);\n\nreturn {\n  \"userName\": adjectives[randomAdjectiveIndex] + \"-\" + animals[randomAnimalIndex]\n};"
+      },
+      "id": "533a70ba-850d-42fc-8270-62de70323ccc",
+      "name": "User name generator",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        -980
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "user",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $json.userId }}"
+            },
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $json.userName }}"
+            },
+            {
+              "fieldId": "ip",
+              "fieldValue": "={{ $json.headers['x-real-ip'] }}"
+            },
+            {
+              "fieldId": "user_agent",
+              "fieldValue": "={{ $json.headers['user-agent'] }}"
+            }
+          ]
+        }
+      },
+      "id": "8a316cc2-435a-4b5a-b487-08be03b72409",
+      "name": "Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        -800
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "user",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.params[\"user-id\"] }}"
+            }
+          ]
+        }
+      },
+      "id": "8dc5a3cb-20ac-497c-a859-28a0ee893065",
+      "name": "Supabase1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -220
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "document",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.params['document-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "6547f909-837e-4934-86a6-e3b766ef211a",
+      "name": "Supabase2",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        660,
+        100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n\t\"conversation\": [\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"This document is about \" + $json.title\n\t\t},\n\t\t{\n\t\t\t\"type\": \"bot-button\",\n            \"conversationUrl\": \"https://n8n.orose.gold/webhook/4a0882d1-da22-402c-886e-729a01cf0ccd/users/654e04ca-1f1c-4d9d-97de-d0187c8d03e5/documents/\" + $json.id + \"/formats/talk2\",\n\t\t\t\"buttonLabel\": \"Tell me more!\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"bot-button\",\n            \"conversationUrl\":\"https://n8n.orose.gold/webhook/fd5507a5-1e01-49f5-91c7-c1e414f12839/users/654e04ca-1f1c-4d9d-97de-d0187c8d03e5/documents/\" + $json.id + \"/extract-expense\",\n\t\t\t\"buttonLabel\": \"Extract expense\"\n\t\t}\n\t]\n}"
+      },
+      "id": "4b032f07-870a-4a32-b784-376803387784",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n\t\"conversation\": [\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": $json.summary\n\t\t}\n\t]\n}"
+      },
+      "id": "0772b803-bfc4-43e3-837a-8fb69afc6940",
+      "name": "Code1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        2640
+      ]
+    },
+    {
+      "parameters": {
+        "path": "/users/:user-id/documents/:document-id/formats/talk2",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "34a20926-60fc-4174-8cd7-731e947a13a6",
+      "name": "GET Document TALK Summary",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        2640
+      ],
+      "webhookId": "4a0882d1-da22-402c-886e-729a01cf0ccd"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "document",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.params['document-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "7374e1f6-8766-4612-9f6f-0207e46bd9ba",
+      "name": "Supabase3",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        2380
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "document",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.params['document-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "a825285e-45a4-4cde-852c-e7f130d7c831",
+      "name": "Supabase4",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        2640
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "c2336806-4ff1-4891-b263-c2b815312e3c",
+      "name": "Merge2",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        880,
+        2220
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "id": "e5506c6c-6973-4226-9e2f-f0059709f8cb",
+      "name": "Merge1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1420,
+        -900
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "ea17fd73-194d-446b-8bec-7106ba7e2c09",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        880,
+        -800
+      ]
+    },
+    {
+      "parameters": {
+        "path": "/users/:user-id/documents/:document-id",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "f64c557c-c5ae-4a86-bb89-6fd642fa3fdb",
+      "name": "GET Document",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        100
+      ],
+      "webhookId": "4a0882d1-da22-402c-886e-729a01cf0ccd"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n\t\"conversation\": [\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"Hey \" + $json.name + \" your id is \" + $json.id\n\t\t},\n        {\n\t\t\t\"type\": \"bot-text\",\n            \"text\": \"You created this session on \" + DateTime.fromISO($json.created_at).toFormat('dd LLL yyyy, HH:mm ZZZZ')\n\t\t},\n        {\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"From the ip address \" + $json.ip\n\t\t},\n        {\n\t\t\t\"type\": \"bot-action-button\",\n            \"actionUrl\": \"https://n8n.orose.gold/webhook/71257123-d4c5-462c-a85b-59ccc9d93c13/users/\",\n            \"actionMethod\":\"delete\",\n\t\t\t\"buttonLabel\": \"Delete this session\"\n\t\t}\n\t]\n}"
+      },
+      "id": "de79c5c0-b755-4578-8e91-674b4af3392e",
+      "name": "Code3",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        1640
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "user",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.params['user-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "4e5e7e7d-4d22-4aa2-adf5-18406347df5f",
+      "name": "Supabase6",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        680,
+        1640
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n\t\"conversation\": [\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"The audio note title is: \\\"\" + $json.title + \"\\\"\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"bot-button\",\n            \"conversationUrl\":  \"https://n8n.orose.gold/webhook/4a0882d1-da22-402c-886e-729a01cf0ccd/users/654e04ca-1f1c-4d9d-97de-d0187c8d03e5/audios/\" + $json.id + \"/formats/talk2\",\n\t\t\t\"buttonLabel\": \"Write a summary\"\n\t\t}\n\t]\n}"
+      },
+      "id": "c9f48df4-90ca-4874-a1d3-40948ebe8487",
+      "name": "Code2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1220,
+        4380
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return {\n\t\"conversation\": [\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": $json.summary\n\t\t}\n\t]\n}"
+      },
+      "id": "6b31e76a-9f93-4eae-aaeb-123230b0eefc",
+      "name": "Code4",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        4700
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "audio",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.params['audio-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "c7549aca-ee44-4079-b497-c227d01129ee",
+      "name": "Supabase5",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        660,
+        4440
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "audio",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.params['audio-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "4b5cf1cf-5021-4d7b-9573-e330efb05b00",
+      "name": "Supabase7",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        700,
+        4700
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "34dc9d46-6144-4f1d-a0c9-ef1152142433",
+      "name": "Merge3",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        940,
+        4280
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Audio Conversation flows",
+        "height": 819.6137339055799,
+        "width": 1416.5450643776826,
+        "color": 3
+      },
+      "id": "2cff92b4-7852-4371-8886-5d26958c6778",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        4140
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Document Conversation flows",
+        "height": 1968.4537222467363,
+        "width": 1430.5793991416292,
+        "color": 5
+      },
+      "id": "88681ad0-ac2b-4b0c-afc5-f126e8f7aaf2",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        2040
+      ]
+    },
+    {
+      "parameters": {
+        "content": "\n# ⚠️Shouldn't these 2 groups be merged?",
+        "height": 225.49356223175943,
+        "width": 317.1888412017167
+      },
+      "id": "2964a1cc-d3d0-4a15-a051-1b7e656db3af",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        3980
+      ]
+    },
+    {
+      "parameters": {
+        "path": "/users/:user-id/documents/:document-id/formats/talk1",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "d829d5dc-e737-4706-b811-b3af4ab42a1e",
+      "name": "GET Document TALK Overview",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        2300
+      ],
+      "webhookId": "4a0882d1-da22-402c-886e-729a01cf0ccd"
+    },
+    {
+      "parameters": {
+        "path": "/users/:user-id/audios/:audio-id/formats/talk1",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "f622b850-b194-4e2c-951b-4dac36298c0a",
+      "name": "GET Audio TALK Overview1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        4360
+      ],
+      "webhookId": "4a0882d1-da22-402c-886e-729a01cf0ccd",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "path": "/users/:user-id/audios/:audio-id/formats/talk2",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "08896c6b-c930-4225-8bca-bdbee063888b",
+      "name": "GET Audio TALK Summary1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        280,
+        4700
+      ],
+      "webhookId": "4a0882d1-da22-402c-886e-729a01cf0ccd"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "user",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.params[\"user-id\"] }}"
+            }
+          ]
+        }
+      },
+      "id": "daf61eea-60c2-452b-a63e-e5e926307599",
+      "name": "Supabase8",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -540
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "ead9900e-6f1e-4328-900c-ae0701a8c37c",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1220,
+        -540
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "id": "1ff8ea07-6636-4d36-bdf5-516cde564e5d",
+      "name": "Respond to Webhook1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1220,
+        -360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8e6fe3d3-c17e-42f5-9eb2-3d54dbcdf6f8",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b11f3bfd-4118-43b8-bbc0-eb40072ce95e",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        860,
+        -540
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "DELETE",
+        "path": "/users/:user-id",
+        "responseMode": "lastNode",
+        "responseData": "noData",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "5b3c3197-83bf-4570-bf3f-8bc11512fb4e",
+      "name": "DELETE User",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -220
+      ],
+      "webhookId": "71257123-d4c5-462c-a85b-59ccc9d93c13"
+    },
+    {
+      "parameters": {
+        "path": "/c/users/:user-id",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "c2f5abcc-d53d-46ba-9551-0033560d7890",
+      "name": "GET User",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        -540
+      ],
+      "webhookId": "71257123-d4c5-462c-a85b-59ccc9d93c13"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "expense",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "document",
+              "keyValue": "={{ $json.params['document-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "d150abfe-26db-4b12-9c21-d0178d61efaa",
+      "name": "Supabase10",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        640,
+        2980
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n\t\"conversation\": [\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"📃 Invoice from vendor {{ $json.vendor }}\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"💰 Amount {{ $json.amount }} {{ $json.currency }}\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"📅 issued {{ DateTime.fromISO($json.created_at).toFormat('dd LLL yyyy')}}\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"❓ {{ $json.is_payed ? 'PAYED' : 'NOT PAYED' }}\"\n\t\t},\n        {\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"Would you like to add it to an expense note?\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"bot-button\",\n            \"conversationUrl\": \"https://n8n.orose.gold/webhook/997a4b07-7f5a-4a51-a5cc-fec87af6b390\",\n\t\t\t\"buttonLabel\": \"Yes let's add it!\"\n\t\t}\n\t]\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "9accfedc-d85d-4892-9912-bf4af7061ddb",
+      "name": "200 - Return expenses talk",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1140,
+        2980
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "users",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "dedef78e-35e9-4f11-92bf-38ff64ba69e1",
+      "name": "CREATE User",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        -880
+      ],
+      "webhookId": "0fa6532a-f376-4547-a585-7105a1879b62"
+    },
+    {
+      "parameters": {
+        "path": "/users/:user-id",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "7417b785-097c-4bd8-bf7b-47e2eb297c73",
+      "name": "GET Document TALK UserSession",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        1640
+      ],
+      "webhookId": "4a0882d1-da22-402c-886e-729a01cf0ccd"
+    },
+    {
+      "parameters": {
+        "content": "# Session Conversation flows",
+        "height": 549.6506057218153,
+        "width": 1430.5793991416292
+      },
+      "id": "1c68ab45-f773-49ff-a8e3-113ea3700395",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        100,
+        1384.4181319297818
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "note",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.body.title }}"
+            },
+            {
+              "fieldId": "description",
+              "fieldValue": "={{ $json.body.description }}"
+            },
+            {
+              "fieldId": "user",
+              "fieldValue": "={{ $json.params['user-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "3f452fa6-9df7-41a1-9ab7-a47145aff237",
+      "name": "Supabase9",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        460,
+        440
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "6199860f-0248-479d-ac6b-a36bdcadc936",
+      "name": "Respond to Webhook2",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "users/:user-id/notes",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "52b0aa6e-b7e2-4f6f-a4c9-d1f8d0ff0e53",
+      "name": "CREATE note",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        440
+      ],
+      "webhookId": "0fa6532a-f376-4547-a585-7105a1879b62"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "expense",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.params['expense-id'] }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "note",
+              "fieldValue": "={{ $json.params['note-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "5c99132b-1e44-481b-ae54-7152cf43cdd3",
+      "name": "Supabase11",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        460,
+        700
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "noData",
+        "options": {
+          "responseCode": 204
+        }
+      },
+      "id": "37f66828-9b2b-40c6-9104-031592de69cb",
+      "name": "Respond to Webhook3",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        680,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "5a47059a-1e59-4687-9496-5a0fc628b4cd",
+      "name": "Respond to Webhook4",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1520,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "note",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.params['note-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "42895277-1572-4f08-86cb-125e64424357",
+      "name": "GET Note",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        960
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "path": "users/:user-id/notes/:note-id",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "2f142564-1ad4-4e58-8338-9b2fae73bc78",
+      "name": "GET note",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        980
+      ],
+      "webhookId": "0fa6532a-f376-4547-a585-7105a1879b62"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nconst documentsId = [];\nlet totalValue = 0;\nfor (const item of $input.all()) {\n  totalValue+=item.json.amount;\n  documentsId.push(item.json.id);\n}\n\nreturn {documentsId, \"total\":totalValue};"
+      },
+      "id": "bbad73d0-72ee-4641-add2-1a18cf1f8d9c",
+      "name": "Code5",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "9d5a1e1e-3072-41ce-9624-572747a4e4f8",
+      "name": "Merge4",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1160,
+        1020
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "expense",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "note",
+              "condition": "eq",
+              "keyValue": "={{ $json.params['note-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "5f71e42c-a48d-4f7e-848d-01458f47ff12",
+      "name": "Get Expenses",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        600,
+        1200
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n\t\"conversation\": [\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"Select the expense note to assign to this document\"\n\t\t},\n\t\t{\n\t\t\t\"type\": \"bot-dropdown\"\n\t\t}\n\t]\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "377c5381-cf5c-48bf-ad90-cf8db0a94262",
+      "name": "200 - Return expenses talk3",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1140,
+        3320
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n\t\"conversation\": [\n\t\t{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"Great, another expense added! Here is the summary of the Expense note\"\n\t\t},\n{\n\t\t\t\"type\": \"bot-text\",\n\t\t\t\"text\": \"5 expenses, total amount of 564.00 EUR\"\n\t\t}\n\t]\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "f349aa32-4138-48ba-808e-69f2a9ef1718",
+      "name": "200 - Return expenses talk4",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1140,
+        3700
+      ]
+    },
+    {
+      "parameters": {
+        "path": "/users/:user-id/documents/:document-id/extract-expense",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "id": "c8f2ede6-e055-41be-969e-28736fb0e010",
+      "name": "Return expense Talk",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        2980
+      ],
+      "webhookId": "fd5507a5-1e01-49f5-91c7-c1e414f12839"
+    },
+    {
+      "parameters": {
+        "path": "5dd35346-6ed5-4014-9adc-9251bd0f2fd7",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "eb0beada-ef37-41cd-9e77-073e982ac0e9",
+      "name": "Expense note report",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        3700
+      ],
+      "webhookId": "5dd35346-6ed5-4014-9adc-9251bd0f2fd7"
+    },
+    {
+      "parameters": {
+        "path": "997a4b07-7f5a-4a51-a5cc-fec87af6b390",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "460cc329-19cb-4e69-b46e-ba9e212bfd4d",
+      "name": "Add to existing expense note",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        3320
+      ],
+      "webhookId": "997a4b07-7f5a-4a51-a5cc-fec87af6b390"
+    },
+    {
+      "parameters": {
+        "httpMethod": "PUT",
+        "path": "users/:user-id/notes/:note-id/assign/:expense-id",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "aa7e4406-6743-4b32-a24c-c4b359fc30e6",
+      "name": "ASSIGN expense > note",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        700
+      ],
+      "webhookId": "0fa6532a-f376-4547-a585-7105a1879b62"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "User name generator": {
+      "main": [
+        [
+          {
+            "node": "Assign User ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assign User ID": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "GET Document TALK Summary": {
+      "main": [
+        [
+          {
+            "node": "Supabase4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase3": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Supabase4": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Document": {
+      "main": [
+        [
+          {
+            "node": "Supabase2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase6": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase5": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Supabase7": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Document TALK Overview": {
+      "main": [
+        [
+          {
+            "node": "Supabase3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Audio TALK Overview1": {
+      "main": [
+        [
+          {
+            "node": "Supabase5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Audio TALK Summary1": {
+      "main": [
+        [
+          {
+            "node": "Supabase7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase8": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DELETE User": {
+      "main": [
+        [
+          {
+            "node": "Supabase1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET User": {
+      "main": [
+        [
+          {
+            "node": "Supabase8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase10": {
+      "main": [
+        [
+          {
+            "node": "200 - Return expenses talk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE User": {
+      "main": [
+        [
+          {
+            "node": "User name generator",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "GET Document TALK UserSession": {
+      "main": [
+        [
+          {
+            "node": "Supabase6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase9": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE note": {
+      "main": [
+        [
+          {
+            "node": "Supabase9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase11": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Note": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET note": {
+      "main": [
+        [
+          {
+            "node": "Get Expenses",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Expenses": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return expense Talk": {
+      "main": [
+        [
+          {
+            "node": "Supabase10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expense note report": {
+      "main": [
+        [
+          {
+            "node": "200 - Return expenses talk4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to existing expense note": {
+      "main": [
+        [
+          {
+            "node": "200 - Return expenses talk3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ASSIGN expense > note": {
+      "main": [
+        [
+          {
+            "node": "Supabase11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "df3c52b3-6904-47b1-bb0f-5767b4443bd1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "29e4311680856744f9472b9e9cfe8711633314886b4b576c4e1607832c3175db"
+  },
+  "id": "mvr87G3vcSUlMKJB",
+  "tags": []
+}

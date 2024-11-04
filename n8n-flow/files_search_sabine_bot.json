@@ -1,0 +1,256 @@
+{
+  "name": "files.search.sabine.bot",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.fileName = item.binary.file0.fileName;\n  item.json.fileExtension = item.binary.file0.fileExtension;\n  item.json.fileSize = item.binary.file0.fileSize;\n  item.json.fileMimeType = item.binary.file0.mimeType;\n}\n\nreturn $input.all();"
+      },
+      "id": "0bcc32fa-87d9-4acc-ad4b-9d08ac667f60",
+      "name": "GetFileMetadata",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "binaryData": true,
+        "binaryPropertyName": "file0",
+        "dataPropertyName": "file_checksum"
+      },
+      "id": "fb44488f-8fa7-4d37-867a-0465ed0847c0",
+      "name": "CalculateFileChecksum",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        940,
+        320
+      ],
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "checksum",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "file_md5sum",
+              "keyValue": "={{ $json.file_checksum }}"
+            }
+          ]
+        }
+      },
+      "id": "d4cc8a46-2aa3-4f80-aaf3-0b92dd70c6db",
+      "name": "CheckFileIsPresent",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        420
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "id": "73ac508e-f770-4c6c-a8a1-a4674b976bc3",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1220,
+        420
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "2c2bc20a-301f-42b0-ad87-6754a1450732",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        660,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8d8884ae-1bb6-4f7e-873f-274f8b25173d",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "daf6cc8d-b636-4281-896c-f13dd281f701",
+      "name": "Is it a new file?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        1740,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f8f3550f-901f-4b38-950c-ae0fb676de82",
+              "name": "id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f246fc3d-fc05-4b7b-8eac-99a807209732",
+      "name": "Return UUID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2340,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "useDataOfInput": 2
+      },
+      "id": "eb4ff1ae-3b31-48ce-8f69-5f1b60a488d3",
+      "name": "Return File properties",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2340,
+        700
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "GetFileMetadata": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "CalculateFileChecksum": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CheckFileIsPresent": {
+      "main": [
+        [
+          {
+            "node": "Is it a new file?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "CheckFileIsPresent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Return File properties",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "GetFileMetadata",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "CalculateFileChecksum",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is it a new file?": {
+      "main": [
+        [
+          {
+            "node": "Return File properties",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return UUID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e873392c-5e4c-4866-9fa6-1b620ba4930f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "29e4311680856744f9472b9e9cfe8711633314886b4b576c4e1607832c3175db"
+  },
+  "id": "raLKponKBvJYQc9D",
+  "tags": []
+}

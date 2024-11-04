@@ -1,0 +1,411 @@
+{
+  "name": "chat.sabine.bot",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6d93eb3d-ff80-402e-a184-92cc9135fd93",
+      "name": "Embeddings OpenAI1",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2920,
+        1880
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7bbd897f-9b05-41bd-b966-f82bbf05d851",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        3480,
+        1880
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "OqCh6J3VBvan7qsO",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "147ed5fe-403a-4b70-9fae-03e0a72d8ec0",
+      "name": "Respond to Webhook1",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        4020,
+        1600
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat/users/:user-id",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8844ee29-772f-4da4-869f-b767aed224de",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        1400
+      ],
+      "webhookId": "9fb54256-f38b-4992-94e5-432cde55075d"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "prompt": "={{ $json.body.message }}",
+        "topK": 1,
+        "options": {
+          "queryName": "match_documents",
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "user-id",
+                "value": "={{ $json.params['user-id'] }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "fbfb7a26-d33f-4379-8058-335f705c3714",
+      "name": "Supabase Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        2900,
+        1600
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "dcfd53f9-c9cd-4544-8c3b-d4d953d1066a",
+              "leftValue": "={{ $json.body.stm[0].type == 'bot-dropdown' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6902e181-d620-48df-8b84-836bd47bcd4a",
+      "name": "IF Dropdown handling",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        2480,
+        1400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "note",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "title",
+              "keyValue": "={{ $json.body.message }}"
+            }
+          ]
+        }
+      },
+      "id": "7125d6bb-235e-4a7e-9de5-40fe397bc819",
+      "name": "Check if note already exist",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        1200
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "8265a16e-c312-4dc3-9b1b-d9ffbb39097b",
+              "leftValue": "={{ $json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "96e5257a-ee97-46e4-ae15-74ff1ea50265",
+      "name": "IF it does NOT exist",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.1,
+      "position": [
+        3160,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "note",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $('IF Dropdown handling').item.json.body.message }}"
+            },
+            {
+              "fieldId": "description",
+              "fieldValue": "={{ $('IF Dropdown handling').item.json.body.message }}"
+            },
+            {
+              "fieldId": "user",
+              "fieldValue": "={{ $('IF Dropdown handling').item.json.params['user-id'] }}"
+            },
+            {
+              "fieldId": "user",
+              "fieldValue": "={{ $('Webhook').item.json.params['user-id'] }}"
+            }
+          ]
+        }
+      },
+      "id": "be55ed91-3485-44df-bcb9-d61881033668",
+      "name": "Create note",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3520,
+        1080
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "ffvVcOvbazMraSKj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{'text':'Note with title ' + $input.all()[0].json.title + ' was created successfully!'}];"
+      },
+      "id": "8258a173-8a7c-413f-ac87-5f0f234210ac",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3740,
+        1080
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook').item.json.body.message }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an assistant for question-answering tasks. If it is good enough use the following pieces of retrieved context to answer the question saying that this comes from the user long term memory. If the context doesn't help for answering the question, than use your knowledge sayin that this comes from your model knowledge. If you don't know the answer at all, just admit it politelly, don't respond with a low accuracy answer. If you know the answer then use three sentences maximum and keep the answer concise. Context: {{ $json.document.pageContent }} - Question: {{ $('Webhook').item.json.message }}"
+            }
+          ]
+        }
+      },
+      "id": "b4690010-8953-4f17-b5c3-9c18caca587e",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        3460,
+        1600
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IF Dropdown handling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Dropdown handling": {
+      "main": [
+        [
+          {
+            "node": "Check if note already exist",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check if note already exist": {
+      "main": [
+        [
+          {
+            "node": "IF it does NOT exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF it does NOT exist": {
+      "main": [
+        [
+          {
+            "node": "Create note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create note": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "747cd3fd-8009-4b7d-8c4a-8806e3b124eb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "29e4311680856744f9472b9e9cfe8711633314886b4b576c4e1607832c3175db"
+  },
+  "id": "0vg4R5zzwtbjD5aF",
+  "tags": []
+}
